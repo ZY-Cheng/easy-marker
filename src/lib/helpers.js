@@ -462,3 +462,15 @@ export function rectToPointArray(rect, offset, margin) {
   })
   return points
 }
+
+export function getHightClickPriorityLine(lines) {
+  let clickPriority = -1
+  let clickLine
+  lines.forEach((line) => {
+    if (line.line.meta.clickPriority > clickPriority) {
+      clickLine = line
+      clickPriority = line.line.meta.clickPriority
+    }
+  })
+  return clickLine
+}

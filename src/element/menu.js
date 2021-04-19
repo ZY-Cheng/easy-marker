@@ -1,5 +1,5 @@
 import BaseElement from './base'
-import { anyToPx } from '../lib/helpers'
+import { anyToPx, getHightClickPriorityLine } from '../lib/helpers'
 import TextNode from '../lib/text_node'
 import { EasyMarkerMode, MenuType } from '../lib/types'
 
@@ -73,7 +73,7 @@ export default class Menu extends BaseElement {
     this.height = 0
     this.width = 0
     this.type = MenuType.SELECT
-    this.options = {}
+    this.options = null // TODO: object or array 存的是点击的Lines，名字起得不好，需要后期改名
     this.createElement()
     this.mount()
     this.hide()
@@ -96,6 +96,7 @@ export default class Menu extends BaseElement {
 
   createElement() {
     const wrapper = document.createElement('div')
+    this.element = wrapper
     wrapper.style.position = 'absolute'
     wrapper.style.width = 'max-content'
     wrapper.style.textAlign = 'center'
@@ -106,6 +107,7 @@ export default class Menu extends BaseElement {
     wrapper.style.transition = 'transform 0.2s ease, opacity 0.2s ease'
 
     const menu = document.createElement('div')
+    this.menuElement = menu
     menu.classList.add('em-menu')
     Object.assign(menu.style, this.option.style.menu)
 
@@ -115,13 +117,8 @@ export default class Menu extends BaseElement {
 
     wrapper.appendChild(menu)
     wrapper.appendChild(bottomTriangle)
-    this.option.items.forEach((item) => {
-      const menuItem = this.createMenuItemElement(item)
-      this.itemMap.set(menuItem, item)
-      menu.appendChild(menuItem)
-    })
-    this.menuElement = menu
-    this.element = wrapper
+    this.renderMenuItems()
+
     const style = document.createElement('style')
     style.type = 'text/css'
     style.rel = 'stylesheet'
@@ -156,6 +153,24 @@ export default class Menu extends BaseElement {
     }
 
     return menuItem
+  }
+
+  renderMenuItems(options) {
+    this.removeMenuItems()
+    const selection = options && this.getSelection(options)
+    const menuItems = typeof this.option.items === 'function' ? this.option.items(selection) : this.option.items
+    menuItems.forEach((item) => {
+      const menuItem = this.createMenuItemElement(item)
+      this.itemMap.set(menuItem, item)
+      this.menuElement.appendChild(menuItem)
+    })
+  }
+
+  removeMenuItems() {
+    this.itemMap.forEach((item, el) => {
+      this.menuElement.removeChild(el)
+    })
+    this.itemMap.clear()
   }
 
   setPosition(start, end) {
@@ -216,14 +231,19 @@ export default class Menu extends BaseElement {
   }
 
   reset() {
-    this.options = {}
+    if (this.options instanceof Array) {
+      this.options = []
+    } else {
+      this.options = {}
+    }
   }
 
   get isShow() {
     return this.style.visibility === 'visible'
   }
 
-  show() {
+  show(options) {
+    this.renderMenuItems(options)
     if (this.type === MenuType.HIGHLIGHT) {
       this.element.classList.remove('em-menu-wrapper-select')
       this.element.classList.add('em-menu-wrapper-highlight')
@@ -295,7 +315,14 @@ export default class Menu extends BaseElement {
     })
     if (!copyItem) return
     const selection = this.getSelection(options)
-    if (copyItem.id && this.easyMarker.menuOnClick) {
+    const hightClickPriorityLine = getHightClickPriorityLine(this.options)
+    if (hightClickPriorityLine) { // TODO: 兼容老逻辑的判断，如果确定后面else逻辑传的第三个参数没有使用，可以去掉这个判断
+      if (copyItem.id && this.easyMarker.menuOnClick) {
+        this.easyMarker.menuOnClick(copyItem.id, selection, this.options, { e })
+      } else {
+        copyItem.handler.call(this.easyMarker, selection, this.options, { e })
+      }
+    } else if (copyItem.id && this.easyMarker.menuOnClick) {
       this.easyMarker.menuOnClick(copyItem.id, selection, Object.assign({}, this.options, { e }))
     } else {
       copyItem.handler.call(this.easyMarker, selection, Object.assign({}, this.options, { e }))

@@ -15,9 +15,9 @@ declare class EasyMarker {
   public cancelHighlightLine(id: string | number): boolean;
   public onHighlightLineClick(
     cb: (
-      id: string | number,
-      meta: unknown,
-      selection: SelectionContent,
+      hightClickPriorityLine: { id: string | number, line: HighlightLineInfo },
+      clickLines: { id: string | number, line: HighlightLineInfo }[],
+      e: Event
     ) => void,
   ): void;
   public onSelectStatusChange(cb: (status: SelectStatus) => void): void;
@@ -41,13 +41,19 @@ export enum SelectStatus {
   FINISH = 'finish',
 }
 
+export enum NoteType {
+  UNDERLINE = 'underline',
+  HIGHLIGHT = 'highlight',
+  DASH = 'dash'
+}
+
 export interface InitOptions {
   excludeElements?: HTMLElement[];
   includeElements?: HTMLElement[];
 }
 
 export interface EasyMarkerOptions {
-  menuItems?: MenuItem[];
+  menuItems?: MenuItem[] | ((selection?: SelectionIdentifier) => MenuItem[]);
   menuTopOffset?: number | string;
   menuStyle?: MenuStyle;
   disableTapHighlight?: boolean;
@@ -122,7 +128,14 @@ export interface MarkdownOptions {
 export interface HighlightLine {
   selection: SelectionIdentifier;
   id?: string | number;
-  meta?: unknown;
+  meta?: {
+    [k: string]: any
+    clickPriority?: number,
+    clickAction?: 'menuPop' | 'custom', // popMenu 默认逻辑
+    type?: NoteType,
+  };
 }
+
+export type HighlightLineInfo = Omit<HighlightLine, 'id'>
 
 export default EasyMarker;
