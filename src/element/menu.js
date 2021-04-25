@@ -15,6 +15,7 @@ export default class Menu extends BaseElement {
     this.container = container
     this.handler = null
     this.mode = options.mode
+    this.selectionOptions = null
     this.option = {
       items: options.menuItems,
       isMultiColumnLayout: options.isMultiColumnLayout,
@@ -48,6 +49,9 @@ export default class Menu extends BaseElement {
           display: 'inline-block',
         },
         icon: {
+          display: 'block',
+        },
+        title: {
           display: 'block',
         },
       },
@@ -131,7 +135,7 @@ export default class Menu extends BaseElement {
   }
 
   createMenuItemElement({
-    text, iconName, style: itemStyle, iconStyle, type,
+    text, iconName, style: itemStyle, iconStyle, type, title, titleStyle,
   }) {
     // eslint-disable-line class-methods-use-this
     const menuItem = document.createElement('span')
@@ -147,6 +151,15 @@ export default class Menu extends BaseElement {
       const textNode = document.createTextNode(text)
       menuItem.appendChild(iconItem)
       menuItem.appendChild(textNode)
+    } else if (title) {
+      const titleItem = document.createElement('span')
+      Object.assign(titleItem.style, this.option.style.title, titleStyle)
+      titleItem.className = 'em-menu-item-title'
+      const titleNode = document.createTextNode(title)
+      titleItem.appendChild(titleNode)
+      const textNode = document.createTextNode(text)
+      menuItem.appendChild(titleItem)
+      menuItem.appendChild(textNode)
     } else {
       const textNode = document.createTextNode(text)
       menuItem.appendChild(textNode)
@@ -156,9 +169,10 @@ export default class Menu extends BaseElement {
   }
 
   renderMenuItems(options) {
+    this.selectionOptions = options
     this.removeMenuItems()
     const selection = options && this.getSelection(options)
-    const menuItems = typeof this.option.items === 'function' ? this.option.items(selection) : this.option.items
+    const menuItems = typeof this.option.items === 'function' ? this.option.items(selection, this.type) : this.option.items
     menuItems.forEach((item) => {
       const menuItem = this.createMenuItemElement(item)
       this.itemMap.set(menuItem, item)
@@ -252,10 +266,10 @@ export default class Menu extends BaseElement {
       this.element.classList.add('em-menu-wrapper-select')
     }
     let relativeTop = 0
-    if (!this.height || !this.width) {
-      this.height = Number((window.getComputedStyle(this.menuElement).height || '').replace('px', ''))
-      this.width = Number((window.getComputedStyle(this.menuElement).width || '').replace('px', ''))
-    }
+    // if (!this.height || !this.width) {
+    this.height = Number((window.getComputedStyle(this.menuElement).height || '').replace('px', ''))
+    this.width = Number((window.getComputedStyle(this.menuElement).width || '').replace('px', ''))
+    // }
     const { top: containerTop, right: containerRight, left: containerLeft } = this.container.getBoundingClientRect()
     if (containerTop < 0 && this.positionRange.bottom < -containerTop) {
       relativeTop = this.positionRange.bottom
@@ -272,7 +286,12 @@ export default class Menu extends BaseElement {
     // this.style.display = 'block'
     this.style.visibility = 'visible'
     this.style.top = `${relativeTop}px`
-    if (this.positionRange.left + containerLeft + this.width / 2 > this.windowWidth) {
+    console.log('$$$%%%%', this.positionRange, containerLeft, containerRight, this.width, this.windowWidth)
+    if (this.width >= containerRight - containerLeft) {
+      const left = (containerRight - containerLeft) / 2
+      this.style.left = `${left}px`
+      this.style.right = ''
+    } else if (this.positionRange.left + containerLeft + this.width / 2 > this.windowWidth) {
       let right
       if (this.style.position === 'fixed' && !this.option.isMultiColumnLayout) {
         right = containerRight - this.positionRange.left - this.width / 2
@@ -318,9 +337,9 @@ export default class Menu extends BaseElement {
     const hightClickPriorityLine = getHightClickPriorityLine(this.options)
     if (hightClickPriorityLine) { // TODO: 兼容老逻辑的判断，如果确定后面else逻辑传的第三个参数没有使用，可以去掉这个判断
       if (copyItem.id && this.easyMarker.menuOnClick) {
-        this.easyMarker.menuOnClick(copyItem.id, selection, this.options, { e })
+        this.easyMarker.menuOnClick(copyItem.id, selection, Object.assign({}, this.options, { e }))
       } else {
-        copyItem.handler.call(this.easyMarker, selection, this.options, { e })
+        copyItem.handler.call(this.easyMarker, selection, Object.assign({}, this.options, { e }))
       }
     } else if (copyItem.id && this.easyMarker.menuOnClick) {
       this.easyMarker.menuOnClick(copyItem.id, selection, Object.assign({}, this.options, { e }))
@@ -402,7 +421,7 @@ export default class Menu extends BaseElement {
   handleScroll() {
     if (!this.ticking) {
       window.requestAnimationFrame(() => {
-        this.show()
+        this.show(this.selectionOptions)
         this.ticking = false
       })
       this.ticking = true

@@ -152,40 +152,44 @@ export default class Highlight extends BaseElement {
     this.lineMap.forEach((line) => {
       const type = line.meta.type || this.type
       line.points.forEach((points, index) => {
-        if (type === NoteType.UNDERLINE) {
-          this.element.appendChild(this.createLine(points))
-        } else if (type === NoteType.DASH) {
-          this.element.appendChild(this.createDash(points))
-        } else {
-          this.element.appendChild(this.createRectangle(points))
-        }
-        if (line.points.length - 1 === index && line.meta && line.meta.tag) {
-          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-          text.setAttribute('x', points[2][0] - 5)
-          text.setAttribute('y', points[2][1] + 4)
-          text.setAttribute('dominant-baseline', 'hanging')
-          text.setAttribute('text-anchor', 'end')
-          text.setAttribute('font-size', '10')
-          text.setAttribute('fill', this.option.tagColor)
-          text.textContent = line.meta.tag
-          text.classList.add('em-highlight-tag-text')
-          this.element.appendChild(text)
-          // setTimeout(() => {
-          // 异步获取位置在某些情况无法正常渲染
-          // 同步执行在某些时候无法取到getBox
-          // const textRect = text.getBBox()
-          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-          // rect.setAttribute('x', textRect.x - 5)
-          // rect.setAttribute('y', textRect.y - 1)
-          rect.setAttribute('x', points[2][0] - 25 - 5)
-          rect.setAttribute('y', points[2][1] - 0)
-          rect.setAttribute('rx', 2)
-          rect.setAttribute('ry', 2)
-          rect.setAttribute('width', 20 + 10)
-          rect.setAttribute('height', 14 + 2)
-          rect.setAttribute('fill', this.option.tagBackground)
-          this.element.insertBefore(rect, text)
-          // }, 10)
+        try {
+          if (type === NoteType.UNDERLINE) {
+            this.element.appendChild(this.createLine(points))
+          } else if (type === NoteType.DASH) {
+            this.element.appendChild(this.createDash(points))
+          } else {
+            this.element.appendChild(this.createRectangle(points))
+          }
+          if (line.points.length - 1 === index && line.meta && line.meta.tag) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            text.setAttribute('x', points[2][0] - 5)
+            text.setAttribute('y', points[2][1] + 4)
+            text.setAttribute('dominant-baseline', 'hanging')
+            text.setAttribute('text-anchor', 'end')
+            text.setAttribute('font-size', '10')
+            text.setAttribute('fill', this.option.tagColor)
+            text.textContent = line.meta.tag
+            text.classList.add('em-highlight-tag-text')
+            this.element.appendChild(text)
+            // setTimeout(() => {
+            // 异步获取位置在某些情况无法正常渲染
+            // 同步执行在某些时候无法取到getBox
+            // const textRect = text.getBBox()
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+            // rect.setAttribute('x', textRect.x - 5)
+            // rect.setAttribute('y', textRect.y - 1)
+            rect.setAttribute('x', points[2][0] - 25 - 5)
+            rect.setAttribute('y', points[2][1] - 0)
+            rect.setAttribute('rx', 2)
+            rect.setAttribute('ry', 2)
+            rect.setAttribute('width', 20 + 10)
+            rect.setAttribute('height', 14 + 2)
+            rect.setAttribute('fill', this.option.tagBackground)
+            this.element.insertBefore(rect, text)
+            // }, 10)
+          }
+        } catch (error) {
+          console.error('easyMarker.render', error)
         }
       })
     })
@@ -303,7 +307,7 @@ export default class Highlight extends BaseElement {
     if (clickLines.length > 0 && this.easyMarker) {
       const hightClickPriorityLine = getHightClickPriorityLine(clickLines)
 
-      if (hightClickPriorityLine.line.meta.clickAction) { // !REMEMBER: clickAction 与 clickPriority 必须成对使用
+      if (hightClickPriorityLine && hightClickPriorityLine.line.meta.clickAction) { // !REMEMBER: clickAction 与 clickPriority 必须成对使用
         if (hightClickPriorityLine.line.meta.clickAction === 'custom') {
           this.easyMarker.highlightLineClick(hightClickPriorityLine, clickLines, e)
         } else if (hightClickPriorityLine.line.meta.clickAction === 'menuPop') {

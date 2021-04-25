@@ -22,7 +22,7 @@ declare class EasyMarker {
   ): void;
   public onSelectStatusChange(cb: (status: SelectStatus) => void): void;
   public onMenuClick(
-    cb: (id: string | number, selection: SelectionContent) => void,
+    cb: (id: string | number, selection: SelectionContent, options: { e: Event }) => void,
   ): void;
   public registerEventHook(cb: () => void): void;
   public destroy(): void;
@@ -53,7 +53,7 @@ export interface InitOptions {
 }
 
 export interface EasyMarkerOptions {
-  menuItems?: MenuItem[] | ((selection?: SelectionIdentifier) => MenuItem[]);
+  menuItems?: MenuItem[] | ((selection: SelectionIdentifier, type: MenuType) => MenuItem[]);
   menuTopOffset?: number | string;
   menuStyle?: MenuStyle;
   disableTapHighlight?: boolean;

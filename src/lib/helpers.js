@@ -382,7 +382,9 @@ export function getDeviceType() {
   if (typeof navigator !== 'undefined' && navigator.userAgent) {
     const ua = navigator.userAgent
     if (ua.indexOf('Tablet') > -1 || ua.indexOf('Pad') > -1 || ua.indexOf('Nexus 7') > -1) return DeviceType.MOBILE
-    if (ua.indexOf('Mobi') > -1 || ua.indexOf('Android') > -1 || ua.indexOf('iPh') > -1 || ua.indexOf('FLOW') > -1) { return DeviceType.MOBILE }
+    if (ua.indexOf('Mobi') > -1 || ua.indexOf('Android') > -1 || ua.indexOf('iPh') > -1 || ua.indexOf('FLOW') > -1) {
+      return DeviceType.MOBILE
+    }
     return DeviceType.PC
   }
   return DeviceType.MOBILE
@@ -472,5 +474,8 @@ export function getHightClickPriorityLine(lines) {
       clickPriority = line.line.meta.clickPriority
     }
   })
+  if (clickPriority === -1) {
+    return null
+  }
   return clickLine
 }
